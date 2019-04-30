@@ -102,7 +102,8 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 		if(isRunning != -1 && processes[isRunning].exec_time == 0){
 			waitpid(processes[isRunning].pid, NULL, 0);
 			printf("%s %d\n",processes[isRunning].name, processes[isRunning].pid );
-			isRunning = -1;
+			if(schpolicy != 1)
+				isRunning = -1;
 			finish_ps += 1;
 			if(finish_ps == processnum)break;
 		}
