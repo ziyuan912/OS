@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sched.h>
 #include "processer.h"
+#include <linux/kernel.h>
 
 static int isRunning;
 static int time;
@@ -34,7 +35,7 @@ int FIFO(struct process *processes, int processnum, int time){
 }
 
 int SJF(struct process *processes, int processnum, int time)  {
-	if (isRunning == -1) return isRunning;
+	if (isRunning != -1) return isRunning;
 	int next = -1;
 	for (int i = 0; i < processnum; i++) {
 		if (processes[i].ready_time > time || processes[i].exec_time == 0)
@@ -64,38 +65,48 @@ int PSJF(struct process *processes, int processnum, int time)  {
 }
 
 int RR(struct process *processes, int processnum, int time){
-	int next;
-	if (isRunning == -1) {
-		for (int i = 0; i < processnum; i++) {
-			if (processes[i].ready_time <= time && processes[i].exec_time > 0){
+	int next = -1;
+	 if (isRunning == -1) {
+		for (int i = 0; i < processnum; i++)
+		{
+			if (processes[i].ready_time <= time && processes[i].exec_time > 0)
+			{
 				next = i;
 				break;
 			}
 		}
-	}
-	else if ((time - t_switch) % 500 == 0)  {
+	 }
+	 else if ((time - t_switch) % 500 == 0)  {
 		next = (isRunning + 1) % processnum;
 		while (processes[next].ready_time > time || processes[next].exec_time == 0)
-			next = (next + 1) % processnum;
-	}
-	else
-		next = isRunning;
-	return next;
-}  
+			next = (next+1) % processnum;
+	 }
+	 else next = isRunning;
+	//printf("%d\n", next);
+ 	return next;
+}
 
 int scheduler(struct process *processes, int processnum, int schpolicy) {
-    qsort(processes, processnum, sizeof(struct process), cmp);
+	qsort(processes, processnum, sizeof(struct process), cmp);
 
-    isRunning = -1;
-    time = 0;
-    finish_ps = 0;
-    for (int i = 0; i < processnum; i++){
-		processes[i].pid = proc_exec(processes[i]);
-		proc_block(processes[i].pid);
-    }
+	isRunning = -1;
+	time = 0;
+	finish_ps = 0;
+	t_switch = 0;
+	if(finish_ps == processnum)return 0;
 	proc_assign_cpu(getpid(), PARENT_CPU);
 	proc_wakeup(getpid());
+	for (int i = 0; i < processnum; i++){
+		if(processes[i].exec_time == 0){
+			finish_ps ++;
+			continue;
+		}
+		processes[i].pid = proc_exec(processes[i]);
+		proc_block(processes[i].pid);
+		//printf("wtf\n");
+	}
 	while(1){
+		//printf("time is %d\n", time);
 		if(isRunning != -1 && processes[isRunning].exec_time == 0){
 			waitpid(processes[isRunning].pid, NULL, 0);
 			printf("%s %d\n",processes[isRunning].name, processes[isRunning].pid );
@@ -109,7 +120,9 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 				next = FIFO(processes, processnum, time);
 				break;
 			case 1:
+				//printf("heehee\n");
 				next = RR(processes, processnum, time);
+				//printf("heehee\n");
 				break;
 			case 2:
 				next = SJF(processes, processnum, time);
@@ -130,6 +143,7 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 			}
 			isRunning = next;
 		}
+		//printf("%d %s %d\n", time, processes[isRunning].name, processes[isRunning].exec_time);
 		UNIT_T();
 		time ++;
 		if(isRunning != -1)
