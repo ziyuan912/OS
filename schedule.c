@@ -71,7 +71,7 @@ int RR(struct process *processes, int processnum, int time){
 			}
 		}
 	 }
-	 else if ((time - t_switch) % 500 == 0)  {
+	 else if ((time - t_switch) % 500 == 0 || processes[isRunning].exec_time == 0)  {
 		next = (isRunning + 1) % processnum;
 		while (processes[next].ready_time > time || processes[next].exec_time == 0)
 			next = (next+1) % processnum;
