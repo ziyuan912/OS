@@ -2,6 +2,7 @@
 #define _PROCESS_H_
 
 #include <sys/types.h>
+#include <linux/kernel.h>
 
 #define CHILD_CPU 1
 #define PARENT_CPU 0

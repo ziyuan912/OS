@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "processer.h"
 #include "schedule.h"
+#include <linux/kernel.h>
 int main()
 {
 	char policy[50];

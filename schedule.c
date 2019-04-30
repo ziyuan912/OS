@@ -82,7 +82,6 @@ int RR(struct process *processes, int processnum, int time){
 			next = (next+1) % processnum;
 	 }
 	 else next = isRunning;
-	//printf("%d\n", next);
  	return next;
 }
 
@@ -103,10 +102,8 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 		}
 		processes[i].pid = proc_exec(processes[i]);
 		proc_block(processes[i].pid);
-		//printf("wtf\n");
 	}
 	while(1){
-		//printf("time is %d\n", time);
 		if(isRunning != -1 && processes[isRunning].exec_time == 0){
 			waitpid(processes[isRunning].pid, NULL, 0);
 			printf("%s %d\n",processes[isRunning].name, processes[isRunning].pid );
@@ -120,9 +117,7 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 				next = FIFO(processes, processnum, time);
 				break;
 			case 1:
-				//printf("heehee\n");
 				next = RR(processes, processnum, time);
-				//printf("heehee\n");
 				break;
 			case 2:
 				next = SJF(processes, processnum, time);
@@ -143,7 +138,6 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 			}
 			isRunning = next;
 		}
-		//printf("%d %s %d\n", time, processes[isRunning].name, processes[isRunning].exec_time);
 		UNIT_T();
 		time ++;
 		if(isRunning != -1)
