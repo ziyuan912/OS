@@ -51,15 +51,10 @@ int PSJF(struct process *processes, int processnum, int time)  {
 	for (int i = 0; i < processnum; i++) {
 		if (processes[i].ready_time > time || processes[i].exec_time == 0)
 			continue;
-		if (next != -1 && processes[i].ready_time <= time)
+		else if (next == -1 || processes[next].exec_time > processes[i].exec_time)
 		{
-			if (processes[next].exec_time - time > processes[i].exec_time)  {
-				processes[next].exec_time = processes[next].exec_time;
 				next = i;
-			}
 		}
-		if (next == -1)
-			next = i;
 	}
 	return next;
 }
@@ -140,8 +135,9 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 		}
 		UNIT_T();
 		time ++;
-		if(isRunning != -1)
+		if(isRunning != -1){
 			processes[isRunning].exec_time -= 1;
+		}
 	}
 	return 0;
 }
