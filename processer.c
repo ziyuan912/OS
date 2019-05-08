@@ -7,9 +7,11 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
-#define GET_TIME	314
-#define mycall	326
+#define GET_TIME	334
+#define mycall	333
 
+#include <string.h>
+#include <errno.h>
 
 void UNIT_T(){
 	volatile unsigned long i;		
@@ -19,14 +21,17 @@ void UNIT_T(){
 
 int proc_assign_cpu(int pid, int core)
 {
-	if (core > sizeof(cpu_set_t))
+	if (core > sizeof(cpu_set_t)){
+		printf("GGGGGG");
 		return -1;
+	}
 
 	cpu_set_t mask;
 	CPU_ZERO(&mask);
 	CPU_SET(core, &mask);
 		
 	if (sched_setaffinity(pid, sizeof(mask), &mask) < 0) {
+		printf("GG");
 		exit(1);
 	}
 
@@ -78,9 +83,10 @@ int proc_wakeup(int pid)
 	
 	param.sched_priority = 0;
 
-	int ret = sched_setscheduler(pid, SCHED_FIFO, &param);
+	int ret = sched_setscheduler(pid, SCHED_OTHER, &param);
 	
-	if (ret < 0) {
+	if (ret < 0){
+		printf("Message_%s\n", strerror(errno));
 		return -1;
 	}
 

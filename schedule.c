@@ -8,7 +8,7 @@
 #include <linux/kernel.h>
 
 static int isRunning;
-static int time;
+static int t_time;
 static int finish_ps;
 static int t_switch;
 
@@ -20,12 +20,12 @@ int cmp(const void *a, const void *b) {
 	else return -1;
 }
 
-int FIFO(struct process *processes, int processnum, int time){
+int FIFO(struct process *processes, int processnum, int t_time){
 	int next = -1;
 	if(isRunning != -1)return isRunning;
 	else{
 		for(int i = 0;i < processnum;i ++){
-			if(processes[i].ready_time > time || processes[i].exec_time == 0)
+			if(processes[i].ready_time > t_time || processes[i].exec_time == 0)
 				continue;
 			else if(next == -1 || processes[i].ready_time < processes[next].ready_time)
 				next = i;
@@ -34,11 +34,11 @@ int FIFO(struct process *processes, int processnum, int time){
 	}
 }
 
-int SJF(struct process *processes, int processnum, int time)  {
+int SJF(struct process *processes, int processnum, int t_time)  {
 	if (isRunning != -1) return isRunning;
 	int next = -1;
 	for (int i = 0; i < processnum; i++) {
-		if (processes[i].ready_time > time || processes[i].exec_time == 0)
+		if (processes[i].ready_time > t_time || processes[i].exec_time == 0)
 			continue;
 		if (next == -1 || processes[i].exec_time < processes[next].exec_time)
 				next = i;
@@ -46,10 +46,10 @@ int SJF(struct process *processes, int processnum, int time)  {
 	return next;
 }
 
-int PSJF(struct process *processes, int processnum, int time)  {
+int PSJF(struct process *processes, int processnum, int t_time)  {
 	int next = -1;
 	for (int i = 0; i < processnum; i++) {
-		if (processes[i].ready_time > time || processes[i].exec_time == 0)
+		if (processes[i].ready_time > t_time || processes[i].exec_time == 0)
 			continue;
 		else if (next == -1 || processes[next].exec_time > processes[i].exec_time)
 		{
@@ -59,32 +59,32 @@ int PSJF(struct process *processes, int processnum, int time)  {
 	return next;
 }
 
-int RR(struct process *processes, int processnum, int time){
+int RR(struct process *processes, int processnum, int t_time){
 	int next = -1;
 	 if (isRunning == -1) {
 		for (int i = 0; i < processnum; i++)
 		{
-			if (processes[i].ready_time <= time && processes[i].exec_time > 0)
+			if (processes[i].ready_time <= t_time && processes[i].exec_time > 0)
 			{
 				next = i;
 				break;
 			}
 		}
 	 }
-	 else if ((time - t_switch) % 500 == 0 || processes[isRunning].exec_time == 0)  {
+	 else if ((t_time - t_switch) % 500 == 0 || processes[isRunning].exec_time == 0)  {
 		next = (isRunning + 1) % processnum;
-		while (processes[next].ready_time > time || processes[next].exec_time == 0)
+		while (processes[next].ready_time > t_time || processes[next].exec_time == 0)
 			next = (next+1) % processnum;
 	 }
 	 else next = isRunning;
  	return next;
 }
 
-int scheduler(struct process *processes, int processnum, int schpolicy) {
+int scheduler(struct process *processes, int processnum, int schpolicy, int t_time) {
 	qsort(processes, processnum, sizeof(struct process), cmp);
 
 	isRunning = -1;
-	time = 0;
+	t_time = 0;
 	finish_ps = 0;
 	t_switch = 0;
 	if(finish_ps == processnum)return 0;
@@ -95,10 +95,10 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 			finish_ps ++;
 			continue;
 		}
-		processes[i].pid = proc_exec(processes[i]);
-		proc_block(processes[i].pid);
+		processes[i].pid = -1;
 	}
 	while(1){
+		
 		if(isRunning != -1 && processes[isRunning].exec_time == 0){
 			waitpid(processes[isRunning].pid, NULL, 0);
 			printf("%s %d\n",processes[isRunning].name, processes[isRunning].pid );
@@ -110,32 +110,36 @@ int scheduler(struct process *processes, int processnum, int schpolicy) {
 		int next;
 		switch(schpolicy){
 			case 0:
-				next = FIFO(processes, processnum, time);
+				next = FIFO(processes, processnum, t_time);
 				break;
 			case 1:
-				next = RR(processes, processnum, time);
+				next = RR(processes, processnum, t_time);
 				break;
 			case 2:
-				next = SJF(processes, processnum, time);
+				next = SJF(processes, processnum, t_time);
 				break;
 			case 3:
-				next = PSJF(processes, processnum, time);
+				next = PSJF(processes, processnum, t_time);
 				break;
 		}
 		if(next != -1){
+			if(processes[next].pid == -1){
+				processes[next].pid = proc_exec(processes[next]);
+				proc_block(processes[next].pid);		
+			}
 			if(isRunning == -1){
 				proc_wakeup(processes[next].pid);
-				t_switch = time;
+				t_switch = t_time;
 			}
 			else if(isRunning != next){
 				proc_block(processes[isRunning].pid);
 				proc_wakeup(processes[next].pid);
-				t_switch = time;
+				t_switch = t_time;
 			}
 			isRunning = next;
 		}
 		UNIT_T();
-		time ++;
+		t_time ++;
 		if(isRunning != -1){
 			processes[isRunning].exec_time -= 1;
 		}
