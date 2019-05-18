@@ -84,13 +84,10 @@ if __name__ == '__main__':
 			for l in range(length):
 				holelabel[h][l] = 0
 		euler = euler_number(gray, holelabel, ranges, i)
-		print('euler:', euler)
 		part = gray[ranges[i][0]:ranges[i][1],ranges[i][2]:ranges[i][3]]
 		#cv2.imshow('output',part)
 		#cv2.waitKey(1000)
 		if euler >= 0:
-			print(i)
 			delleabel[i] = 1
-	print(labels)
 	delete(gray, labels, delleabel)
 	cv2.imwrite('output4.jpg', gray)
