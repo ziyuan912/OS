@@ -92,6 +92,5 @@ if __name__ == '__main__':
 			print(i)
 			delleabel[i] = 1
 	print(labels)
-	cv2.imwrite('output5.jpg', gray)
 	delete(gray, labels, delleabel)
 	cv2.imwrite('output4.jpg', gray)
