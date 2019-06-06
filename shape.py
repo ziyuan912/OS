@@ -15,22 +15,22 @@ def euler_component(img, label, E, h, l, bound):
 	cnt = 1
 	label[h][l] = E
 	if l != 0:
-		if label[h][l - 1] != E and img[h][l - 1] < 30 and l-1 >= bound[2]:
+		if label[h][l - 1] != E and img[h][l - 1] < 50 and l-1 >= bound[2]:
 			if l-1 == bound[2]:
 				return 0
 			cnt += euler_component(img, label, E, h, l-1, bound)
 	if l != img.shape[1] - 1:
-		if label[h][l + 1] != E and img[h][l + 1] < 30 and l+1 <= bound[3]:
+		if label[h][l + 1] != E and img[h][l + 1] < 50 and l+1 <= bound[3]:
 			if l+1 == bound[3]:
 				return 0
 			cnt += euler_component(img, label, E, h, l+1, bound)
 	if h != 0:
-		if label[h - 1][l] != E and img[h - 1][l] < 30 and h-1 >= bound[0]:
+		if label[h - 1][l] != E and img[h - 1][l] < 50 and h-1 >= bound[0]:
 			if h-1 == bound[0]:
 				return 0
 			cnt += euler_component(img, label, E, h - 1, l, bound)
 	if h != img.shape[0] - 1:
-		if label[h + 1][l] != E and img[h + 1][l] < 30 and h+1 <= bound[1]:
+		if label[h + 1][l] != E and img[h + 1][l] < 50 and h+1 <= bound[1]:
 			if h+1 == bound[1]:
 				return 0
 			cnt += euler_component(img, label, E, h + 1, l, bound)
@@ -45,12 +45,13 @@ def euler_number(img, holelabel, ranges, ret):
 				E += 1
 				bound = ranges[ret]
 				cnt = euler_component(img, holelabel, E, h, l, bound)
-				if cnt <= 10 or cnt > 100:
+				if cnt > 100:
 					E -= 1
 	return C - E
 		
 
 if __name__ == '__main__':
+	sys.setrecursionlimit(100000)
 	img = cv2.imread(sys.argv[1])
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 	binary = cv2.threshold(gray,0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
@@ -72,9 +73,11 @@ if __name__ == '__main__':
 	for i in range(ret-1):
 		if ranges[i][1] - ranges[i][0] < 20 or ranges[i][3] - ranges[i][2] < 20:
 			delleabel[i] = 1
-		elif (ranges[i][1] - ranges[i][0])/(ranges[i][3] - ranges[i][2]) < 0.3:
+		elif (ranges[i][1] - ranges[i][0])/(ranges[i][3] - ranges[i][2]) < 0.5:
 			delleabel[i] = 1
-		elif (ranges[i][3] - ranges[i][2])/(ranges[i][1] - ranges[i][0]) < 0.3:
+		elif (ranges[i][3] - ranges[i][2])/(ranges[i][1] - ranges[i][0]) < 0.5:
+			delleabel[i] = 1
+		elif ranges[i][0] == 0 or ranges[i][1] == height-1 or ranges[i][2] == 0 or ranges[i][3] == length-1:
 			delleabel[i] = 1
 	delete(gray, labels, delleabel)
 	cv2.imwrite('output3.jpg', gray)
@@ -85,9 +88,11 @@ if __name__ == '__main__':
 				holelabel[h][l] = 0
 		euler = euler_number(gray, holelabel, ranges, i)
 		part = gray[ranges[i][0]:ranges[i][1],ranges[i][2]:ranges[i][3]]
-		#cv2.imshow('output',part)
-		#cv2.waitKey(1000)
-		if euler >= 0:
+		"""if delleabel[i] != 1:
+			cv2.imshow('ya',part)
+			cv2.waitKey(1000)
+			print(i, euler)"""
+		if euler >= -9:
 			delleabel[i] = 1
 	delete(gray, labels, delleabel)
 	cv2.imwrite('output4.jpg', gray)

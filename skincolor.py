@@ -13,6 +13,6 @@ for i in range(height):
 		else:
 			img[i][j] = (0,0,0)
 
-cv2.imshow('img',img)
+cv2.imwrite('output1.jpeg',img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
